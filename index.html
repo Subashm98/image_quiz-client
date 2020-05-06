@@ -60,8 +60,8 @@
             return fetch(url)
                 .then(response => {
                     if (response.ok === true) {
-                      console.log(response.body.json());
-                        return response.body.json();
+                      console.log(response.text());
+                        return response.text();
                     } else {
                         throw Error(`There was an error in the communication with the server: ${response.statusText}`);
                     }
