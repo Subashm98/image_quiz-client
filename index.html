@@ -45,7 +45,7 @@
     </div>
     <footer>
       <p style="font-size:15px">All the photos in this
-        presentation are not mine!!.</p>
+        presentation are not mine!!</p>
     </footer>
     <!-- <script  type="text/javascript" src='./scripts/configuration.js'></script>
     <script type="text/javascript" src='./scripts/service.js'></script> -->
@@ -60,6 +60,7 @@
             return fetch(url)
                 .then(response => {
                     if (response.ok === true) {
+                      console.log(response);
                         return response.json();
                     } else {
                         throw Error(`There was an error in the communication with the server: ${response.statusText}`);
