@@ -58,25 +58,13 @@
         getAllThemes: () => {
             let url = configuration.base_url + '/home/contents';
             return fetch(url)
-            .then(response => { 
-            return response.json().catch(err => {
-              console.error(`'${err}' happened, but no big deal!`);
-              return JSON.stringify({});
-            });
-            }).then(data => {
-              console.log(data);
-              return data;
-            });
-                // .then(response => {
-                //     if (response.ok === true) {
-                //         return response.json()
-                //                 .catch(err => {
-                //                 console.error(`'${err}' happened, but no big deal!`);
-                //                 return {} });
-                //     } else {
-                //         throw Error(`There was an error in the communication with the server: ${response.statusText}`);
-                //     }
-                // });
+                .then(response => {
+                    if (response.ok === true) {
+                        return response.json();
+                    } else {
+                        throw Error(`There was an error in the communication with the server: ${response.statusText}`);
+                    }
+                });
         }
     }
     service.getAllThemes()

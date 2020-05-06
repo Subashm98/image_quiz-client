@@ -128,26 +128,6 @@
       //base_url : 'http://localhost:4002'
     };
     service = {
-      getImageIds: (contentId) => {
-        let url = `${configuration.base_url}/home/pages/${contentId}`;
-        return fetch(url)
-          .then(response => {
-            if (response.ok)
-              return response.json();
-            else return Error(response.status);
-          });
-      },
-      getImageUrl: (contentId, id) => {
-        return `${configuration.base_url}/home/pages/${contentId}/image/${id}`;
-      },
-      getLabel: (themeId, imageId, x, y) => {
-        return fetch(`${configuration.base_url}/home/words/${themeId}/${imageId}/${x}/${y}`)
-          .then(response => {
-            if (response.ok)
-              return response.json();
-            else return Error(response.status);
-          })
-      },
 
       saveImage: (themeId, formData) => {
         console.log('saving image');
@@ -162,10 +142,7 @@
         let question = { answer: answer, themeId: themeId, imageId: imageId};
         console.log('saving  question');
         console.log(imageId);
-            //       headers: {
-    //         'Content-Type': 'application/json'
-    //         // 'Content-Type': 'application/x-www-form-urlencoded',
-    //       },
+
         return fetch(`${configuration.base_url}/admin/question`, {method:'POST',headers:{'Content-Type': 'application/json'}, body: JSON.stringify(question)})
     
       },
