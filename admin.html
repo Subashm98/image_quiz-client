@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <style media="screen">
+    div {
+      margin: 100px;
+    }
+
+    ul.menu {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #333;
+    }
+
+    li.menu {
+      float: left;
+    }
+
+    li.menu a {
+      display: block;
+      color: white;
+      text-align: center;
+      padding: 14px 16px;
+      text-decoration: none;
+    }
+
+    li.menu a:hover:not(.active) {
+      background-color: #111;
+    }
+
+    .active {
+      background-color: #4CAF50;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      padding-top: 50px;
+      left: 0;
+      top: 0;
+      width: 48%;
+      height: 30%;
+      background-color: rgb(0, 0, 0);
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+      position: relative;
+      background-color: white;
+      padding: 20px;
+      margin: auto;
+      width: 75%;
+      -webkit-animation-name: animatetop;
+      -webkit-animation-duration: 0.4s;
+      animation-name: animatetop;
+      animation-duration: 0.4s
+    }
+
+    .close-btn {
+      float: right;
+      color: lightgray;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .close-btn:hover {
+      color: darkgray;
+    }
+
+    .option{
+        width: 45%;
+        display: inline-block;
+        padding: 10px 0 10px 15px;
+        vertical-align: middle;
+        background: rgba(255, 255, 255, 0.5);
+        margin: 10px 0 10px 10px;
+        color: #000000;
+        border-radius: 20px;
+    }
+  </style>
+  <meta charset="utf-8">
+  <title></title>
+</head>
+
+<body>
+  <ul class="menu">
+    <li class="menu"><a class="active" href="index.html">Home</a></li>
+    <li class="menu"><a href="admin.html">Admin</a></li>
+  </ul>
+  <div>
+    Step 1: Add a question to existing theme or create a new theme:
+    <input type="text" id="theme" style="width:300px;font-size:15px;" onfocusout="themeSelected()" name="theme"
+      list="themes">
+    <datalist id="themes">
+    </datalist>
+  </div>
+
+  <div id="step2aConatiner" style="display:none;">
+    Step 2: upload a new image:
+    <input type="file" accept="image/*" onchange="readImage(event)">
+    <canvas id="canvas" ></canvas>
+  </div>
+
+  <div id="step3container" style="display:none;">
+    Step 3: write the content of the image 
+    <form onsubmit="saveQuestion(); return false;">
+    <input type="text" class = 'option' id="answer" style="width:300px;font-size:15px;" name="answer" placeholder="answer" required>
+    <input type="text" class = 'option' id="option1" style="width:300px;font-size:15px;" name="option1" placeholder="option 1" required>
+    <input type="text" class = 'option' id="option2" style="width:300px;font-size:15px;" name="option2" placeholder="option 2" required>
+    <input type="text" class = 'option' id="option3" style="width:300px;font-size:15px;" name="option3" placeholder="option 3" required> 
+
+    <input type="submit">
+    <!-- <button onclick="saveQuestion();"></button> -->
+  </form>
+
+  </div>
+
+
+  <!-- <script src='./scripts/configuration.js'></script>
+  <script src='./scripts/service.js'></script> -->
+
+  <script type="text/javascript">
+    configuration = {
+      //base_url: 'https://picture-dictionary-api-2020.herokuapp.com'
+      base_url : 'http://localhost:4002'
+    };
+    service = {
+      getImageIds: (contentId) => {
+        let url = `${configuration.base_url}/home/pages/${contentId}`;
+        return fetch(url)
+          .then(response => {
+            if (response.ok)
+              return response.json();
+            else return Error(response.status);
+          });
+      },
+      getImageUrl: (contentId, id) => {
+        return `${configuration.base_url}/home/pages/${contentId}/image/${id}`;
+      },
+      getLabel: (themeId, imageId, x, y) => {
+        return fetch(`${configuration.base_url}/home/words/${themeId}/${imageId}/${x}/${y}`)
+          .then(response => {
+            if (response.ok)
+              return response.json();
+            else return Error(response.status);
+          })
+      },
+
+      saveImage: (themeId, formData) => {
+        console.log('saving image');
+        //console.log(formData);
+        return fetch(`${configuration.base_url}/admin/image/${themeId}`, { method: 'POST', body: formData })
+               .then(x => x.json());
+              
+
+      },
+
+      saveQuestion: (answer, themeId, imageId) => {
+        let question = { answer: answer, themeId: themeId, imageId: imageId};
+        console.log('saving  question');
+        console.log(imageId);
+            //       headers: {
+    //         'Content-Type': 'application/json'
+    //         // 'Content-Type': 'application/x-www-form-urlencoded',
+    //       },
+        return fetch(`${configuration.base_url}/admin/question`, {method:'POST',headers:{'Content-Type': 'application/json'}, body: JSON.stringify(question)})
+    
+      },
+
+
+      saveOptions: (themeId, opt) =>{
+        return fetch(`${configuration.base_url}/admin/option`, {method:'POST',headers:{'Content-Type': 'application/json'}, body: JSON.stringify({themeId:themeId, option:opt})})
+      },
+    }
+    var themes = [];
+    let themesElement = document.getElementById('themes');
+    let themeInputElement = document.getElementById('theme');
+
+    var canvas = document.getElementById('canvas');
+    var context = canvas.getContext("2d");
+    let themeId = -1;
+    let imageId = -1;
+
+    let modal = document.querySelector(".modal");
+    let ModalCloseButton = document.querySelector(".close-btn");
+    let modalInput = document.getElementById("modalInput");
+    // ModalCloseButton.onclick = function () {
+    //   modal.style.display = "none";
+    // }
+
+    // get the current themes
+    getAndDispalyThemes();
+
+    function getAndDispalyThemes() {
+      fetch(`${configuration.base_url}/home/contents`)
+        .then(response => response.json())
+        .then(contents => display(contents))
+        .catch(e => console.error(e));
+    }
+
+        // display the themes
+    function display(contents) {
+      themes = contents;
+      themesElement.textContent = "";
+      for (let theme of themes) {
+        let option = document.createElement('option');
+        option.setAttribute('value', theme.name);
+        themesElement.appendChild(option);
+      }
+    }
+
+    // fires when users select or create a theme
+    function themeSelected() {
+      let selectedValue = themeInputElement.value;
+      if (selectedValue.trim().length === 0) return;
+      let theme = themes.find(x => x.name === selectedValue);
+      if (theme) { // get the images that are associated with the theme
+        themeId = theme.themeid;
+
+        document.getElementById('step2aConatiner').style.display = 'block';
+          
+      } else { // add the new theme to the themes
+        fetch(`${configuration.base_url}/admin/theme`, {
+          method: "post",
+          headers: {
+            'Content-Type': 'application/json'
+            // 'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: JSON.stringify({ theme: selectedValue })
+        })
+          .then(getJsonFromResponse)
+          .then(newThemeId => themeId = newThemeId)
+          .catch(e => console.log(e));
+
+        document.getElementById('step2aConatiner').style.display = 'block';
+      }
+    }
+
+    function readImage(event) {
+      if (event.target.files && event.target.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          var image = new Image();
+          image.crossOrigin = "Anonymous";
+          image.onload = function () {
+            context.canvas.width = image.width;
+            context.canvas.height = image.height;
+            context.drawImage(image, 0, 0, image.width, image.height);
+            //currentImageId = -1;
+            document.getElementById('step3container').style.display = 'block';
+          }
+          image.src = e.target.result;
+        };
+        reader.readAsDataURL(event.target.files[0]);
+      }
+    }
+
+    function saveQuestion(){
+      let answer = document.getElementById('answer').value;
+      let opt1 = document.getElementById('option1').value;
+      let opt2 = document.getElementById('option2').value;
+      let opt3 = document.getElementById('option3').value;
+
+      saveImage(answer);
+      saveOptions(opt1, opt2, opt3)
+
+      
+    }
+ 
+
+    function saveImage(answer) {
+      console.log("SAVING IMAGE");
+       canvas.toBlob(blob => {
+        const formData = new FormData();
+        formData.append('image', blob);
+        service.saveImage(themeId, formData)
+            .then(x => {imageId = x.id; console.log(imageId);  service.saveQuestion(answer, themeId, imageId); })
+            .catch(e => console.log(e));
+
+      });
+      console.log("Image id: " + imageId);
+
+    }
+
+    function saveOptions(opt1, opt2, opt3){
+      service.saveOptions(themeId, opt1);
+      service.saveOptions(themeId, opt2);
+      service.saveOptions(themeId, opt3);
+    }
+
+    function getJsonFromResponse(response) {
+      if (response.status === 200) {
+        //console.log(esponse.json());
+        return response.json();
+      } else { 
+        throw Error(response.status);
+      }
+    }
+
+  </script>
+</body>
+
+</html>
