@@ -190,14 +190,23 @@
     let nextButton = document.getElementById('nextQuestion');
 
     service.getImageIds(contentId)
-            .then(x => {imageIds =x; imageIds =  shuffle(imageIds)});
-    service.getOptions(contentId)
-            .then(x => {options = x ; options = shuffle(options); console.log(options);});
+            .then(x => {imageIds =x; imageIds =  shuffle(imageIds)})
+            .then(getOptions);
+
             
-    service.getAnswers(contentId)
+
+    
+    function getOptions(){
+        service.getOptions(contentId)
+            .then(x => {options = x ; options = shuffle(options); console.log(options);})
+            .then(getAnswers);
+    }
+
+    function getAnswers(){
+        service.getAnswers(contentId)
                 .then(x => {answers = x; console.log(answers)})  
                 .then(loadQuestion);
-    
+    }
 
     let index = 0;
     function loadQuestion(){
@@ -227,7 +236,7 @@
             firstQuestion = false;
         }
 
-        if(index > totalQuestionPerTheme){
+        if(index >= totalQuestionPerTheme){
             container.innerHTML = 'Your Score is ' + score + '/' + index;
         }
         var arrayLength = answers.length;
